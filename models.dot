@@ -1,0 +1,46 @@
+digraph g {
+    node [
+        shape=box
+    ]
+    exe [
+        label = "Executable Spec"
+    ]
+
+    untimed [
+        label = "Untimed Functional Model"
+    ]
+
+    timed [
+        label = "Timed Functional Model"
+    ]
+
+    buscycle [
+        label = "Bus Cycle-accurate Model"
+    ]
+
+    clockcycle [
+        label = "Clock Cycle-accurate Model"
+    ]
+    
+    rtl [
+        label = "Register Transfer Model"
+    ]
+
+    exe -> untimed [
+        label = "Parallelism"
+    ]
+
+    untimed -> timed [
+        label = "Estimated Timing"
+    ]
+
+    timed -> buscycle
+    
+    buscycle -> clockcycle [
+        label = "Clock cycles"
+    ]
+
+    clockcycle -> rtl [
+        label = "Implementation"
+    ]
+}

@@ -65,3 +65,46 @@ There are two kinds of processes:
     \item \lstinline{SC_METHOD}
     \item \lstinline{SC_THREAD}
 \end{itemize}
+
+\subsection{Events}
+Events are the mechanism for reactivity, they control how processes are triggered and resumed.
+
+Example: a signal has an event associated with each value change.
+
+An event is notified by the owner:
+\begin{itemize}
+    \item Immediately: \lstinline{event.notify();}
+    \item After a delta delay: \lstinline{event.notify(SC_ZERO_TIME);}
+    \item After a certain time: \lstinline{event.notify(100, SC_NS);}
+\end{itemize}
+
+\section{Model of Time}
+Time is represented by a integer (default: 64 bits, unsigned) value inside the simulation kernel.
+
+Time units:
+\begin{itemize}
+    \item \lstinline{SC_FS}
+    \item \lstinline{SC_PS}
+    \item \lstinline{SC_NS}
+    \item \lstinline{SC_US}
+    \item \lstinline{SC_MS}
+    \item \lstinline{SC_SEC}
+\end{itemize}
+
+\subsection{Clock module}
+\lstinline{sc_clock clk("clk", 20, 0.5, 2, true);}
+Arguments:
+\begin{itemize}
+    \item Name
+    \item Period
+    \item Duty-Cycle
+    \item Phase Shift (as Time)
+    \item First edge (\lstinline{true} is rising)
+\end{itemize}
+
+\section{Concept of Time for different Models}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=.7\textwidth]{models.pdf}
+\end{figure}
+

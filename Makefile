@@ -5,7 +5,7 @@ INKSCAPE=inkscape
 
 all: main.pdf
 
-main.pdf: *.tex
+main.pdf: *.tex models.pdf
 	$(RUBBER) -d main.tex
 
 %.pdf: %.dot
