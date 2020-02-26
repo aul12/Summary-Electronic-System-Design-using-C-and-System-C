@@ -299,9 +299,41 @@ Time is then rounded according to the resolution so
 \lstinline{sc_time t(3.1415, SC_NS)} is equivalent to
 \lstinline{sc_time t(3140, SC_PS)}.
 
-\section{Concept of Time for Different Models}
+\section{Models of computation}
 \begin{figure}[H]
     \centering
     \includegraphics[width=.7\textwidth]{models.pdf}
 \end{figure}
 
+\section{SystemC Main File}
+SystemC "Hijacks" the \lstinline{main} function, the user must provide a \lstinline{sc_main}, this function is used to instantiate the top-level module, the testbench and start the simulation:
+\begin{lstlisting}
+    int sc_main(int argc, char *argv[]) {
+        ... // Instantiate structure
+
+        sc_start(12, SC_US); // Run the simulation for 12us
+    }
+\end{lstlisting}
+
+\section{Simulation Semantics}
+The event-driven simulation kernel uses an event scheduler, to control timing, order of execution, event handling, and in general concurrency. This is done using delta-cycles.
+
+\subsection{Commands to control simulation}
+\begin{itemize}
+    \item Run the simulation forever, returns when there are no more events: \lstinline{sc_start()} 
+    \item Run the simulation for a maximum of time t, simulation can be continued: \lstinline{sc_start(sc_time t)} 
+    \item Halt simulation, can not be restarted: \lstinline{sc_stop()}
+    \item Get the current simulation time in default time units: \lstinline{double sc_simulation_time()}
+    \item Get the current simulation time: \lstinline{const sc_time &sc_time_stamp()}
+\end{itemize}
+
+\subsection{Event Scheduler}
+\begin{enumerate}
+    \item Initialize: Each process is executed once (use \lstinline{dont_initialize()} inside CTor to avoid)
+    \item Evaluate: Select ready-to-run process and execute
+    \item If there are more ready-to-run process go to 2
+    \item Update: Execute all pending calls to update
+    \item It there are delta delay notifications (caused by the previous step), go to 2
+    \item Advance simulation time to earliest pending notification, if there is none simulation is done
+    \item Go to 2
+\end{enumerate}

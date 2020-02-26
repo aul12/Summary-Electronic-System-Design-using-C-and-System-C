@@ -1,0 +1,14 @@
+digraph g {
+    rankdir = LR
+    node [
+        shape = box
+    ]
+    
+    Process1
+    Process2
+    Process3
+
+    Process1 -> Process2 [ label = "FIFO" ]
+    Process2 -> Process3 [ label = "FIFO" ]
+    Process1 -> Process3 [ label = "FIFO" ]
+}

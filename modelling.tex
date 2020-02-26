@@ -1,1 +1,136 @@
 \chapter{Electronic System Modelling}
+Simulation performance is king.
+
+\section{Design Abstraction Levels}
+\begin{itemize}
+    \item \textbf{ESL}: Electronic System Level: Major blocks of functionality and their connection
+    \item \textbf{RTL}: Registers and combinatorial elements connected together
+    \item \textbf{Gate Level}: Nets comprising AND/OR/NAND/NOR/XOR/DFF etc. gates
+    \item \textbf{Transistor Level}: Nets connected PMOS/NMOS etc. transistors
+    \item \textbf{Geometry Level}: Sets of mask with geometrical layout information
+\end{itemize}
+
+\section{Modelling Approaches}
+Design Flows:
+\begin{itemize}
+    \item Top-Down: Start with overall design, refine blocks
+    \item Bottom-Up: Design detailed block first, then combine
+    \item Middle-Out: Combination of Top-Down, Bottom-Up.
+\end{itemize}
+
+Accuracy of the model:
+\begin{itemize}
+    \item Structural accuracy (pin accuracy)
+    \item Timing accuracy (clock-cycle accuracy)
+    \item Functional accuracy
+    \item Data organization accuracy
+    \item Communication protocol accuracy
+\end{itemize}
+
+\section{Models of Computation}
+Fundamental to system-level design. Provides choices for accuracy/abstraction during design.
+
+Need for different MOC that can interoperate with each other.
+
+The MOC comprise:
+\begin{itemize}
+    \item Methods of communication
+    \item Concept of time
+    \item Rules for process activation
+\end{itemize}
+
+\section{Theory of Dataflow Models}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{dataflow.pdf}
+\end{figure}
+Alternative to the Von Neumann style:
+\begin{itemize}
+    \item Focus on movement of data
+    \item Processes communicate through buffers
+    \item Processes run simultaneously
+    \item Sequence of data tikens read equals written (streaming)
+    \item Scheduling done by a system
+    \item Great for signal-processing applications
+\end{itemize}
+
+\subsection{Kahn Process Networks}
+Unbound buffers, determinisitc, difficult to schedule (and obviously not possible to implement).
+
+\subsection{Synchronous Dataflow}
+Restricted KPN: Read and write fixed number of tokens, easier to schedule.
+
+\section{Untimed Functional Modelling}
+Determinisitic, untimed functional model: Behaviour is described as functionality that maps sequences of input tokens into sequences of output tokens.
+
+With SystemC:
+\begin{itemize}
+    \item Processes communicate via FIFOs
+    \item Processes use \lstinline{SC_THREAD} (Provides implicit synchronization)
+    \item Finite size FIFOs with blocking read and blocking write
+\end{itemize}
+
+\section{Timing in Functional Modelling}
+Introduce timing into Functional Models:
+\begin{itemize}
+    \item IO Delays
+    \item Processing Delays
+    \item Synchronization events 
+\end{itemize}
+
+With SystemC: Insert delays to the \lstinline{wait()} statements.
+
+\section{Transaction-Level Modelling}
+Compared to RTL and BL:
+\begin{itemize}
+    \item Give-up pin-accuracy
+    \item Give-up communication/data accuracy
+    \item High level model
+    \item Details of communication are separated from details of implementation
+    \item Emphasis on modelling functionality of data transfer but not actual implementation
+    \item Can be untimed, timed or even bus-cycle accurate
+\end{itemize}
+Used when simulation speed is needed.
+
+Benefits:
+\begin{itemize}
+    \item Easier to experiment with architectural changes
+    \item Easier to design and use
+    \item Available early in design process
+    \item Ability to accurately (enough) model HW and SW
+    \item High simulation speed (fast enough to validate SW before HW prototypes exist)
+    \item Suppress uninteresting details
+    \item Can serve as the "agreed-upon" interface between HW and Sw
+    \item Can be a testing vehicle, for both HW and SW
+\end{itemize}
+
+With SystemC:
+\begin{itemize}
+    \item Channels are used as communication mechanism (for example \lstinline{sc_fifo})
+    \item Transaction requests by calling functions
+    \item Two Phase Synchronization Scheme
+    \item Optional: priority handling
+    \item Optional: Arbitration Schemes for Bus Access
+\end{itemize}
+
+For High-Performance
+\begin{itemize}
+    \item Model communication via transactions, not signals
+    \item Give up pin accuracy
+    \item Use C++ Datatypes
+    \item Use pointers for efficiency
+    \item Eliminate unnecessary context switches
+    \item Don't use processes if you don't have to
+    \item Use Methods, not Threads
+\end{itemize}
+
+\section{Parametrization}
+Makes it possible to reuse components. Three possibilities:
+\begin{itemize}
+    \item Compile Time
+    \item Elaboration Time
+    \item Simulation Time
+\end{itemize}
+Do as soon as possible.
+
+\section{Interface Design}
