@@ -1,0 +1,67 @@
+\chapter{Introduction}
+\section{What is System C}
+\begin{itemize}
+    \item Means to express concurrency
+    \item Communication Mechanism
+    \item Reactivity
+    \item Concept of Time
+    \item Event Driven Simulation Kernel
+\end{itemize}
+
+\section{Design Flow}
+\begin{enumerate}
+    \item Compilation
+    \item Linking
+    \item Execution
+    \item Elaboration: SystemC Kernel connects and initializes design portions
+    \item Simulation: SystenC Kernel works on event queue until there are no new events (or the kernel is stopped)
+\end{enumerate}
+
+\section{Hardware Data Types}
+Sorted from fastest to slowest:
+\begin{enumerate}
+    \item C++ built in data types: \lstinline{int, unsigned, long, char, float, double}
+    \item 1 to 64 bit integrals: \lstinline{sc_int<>, sc_uint<>}
+    \item 2-valued boolean logic: \lstinline{sc_bit<>, sc_bv<>}
+    \item 4-values logic: \lstinline{sc_logic<>, sc_lv<>}
+    \item unlimited size numbers: \lstinline{sc_bigint<>, sc_biguint<>}
+    \item fixed precision: \lstinline{sc_fixed<>, sc_ufixed<>}
+\end{enumerate}
+
+\section{Modules and Hierarchy}
+\subsection{Modules}
+Modules are containers for structure.
+
+\subsection{Communication}
+Communication is a triplet:
+\begin{itemize}
+    \item \textbf{Ports}: are doors into/out of a channel via a particular interface
+    \item \textbf{Channels}: Implement a particular communication mechanism (e.g. FIFOs, stackes,...) 
+    \item \textbf{Interfaces}: Show a modules communication methods (via abstract C++ class)
+\end{itemize}
+
+\subsection{Channels}
+\subsubsection{Primitive channels}
+Primitive channels are channels provided by System C, they have built in synchronization and are ready to use.
+
+Examples:
+\begin{itemize}
+    \item \lstinline{sc_fifo<>}
+    \item \lstinline{sc_mutex<>}
+    \item \lstinline{sc_signal<>}
+\end{itemize}
+
+\subsubsection{Hierarchical channels}
+Used to implement own channels for complexe communication or communication refinement.
+Requires custom synchronization schemes.
+
+\subsection{Concurrency via Processes}
+A process is a basic unit of functionality, it runs concurrently to other processes.
+
+A process is part of a module and needs to be registered with the simulation kernel.
+
+There are two kinds of processes:
+\begin{itemize}
+    \item \lstinline{SC_METHOD}
+    \item \lstinline{SC_THREAD}
+\end{itemize}
