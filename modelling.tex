@@ -134,3 +134,74 @@ Makes it possible to reuse components. Three possibilities:
 Do as soon as possible.
 
 \section{Interface Design}
+\subsection{Determinisitic Simulations}
+The simulation should be determinisitc, that means the same design should yield the same response, even if different SystemC simulation kernels are being used.
+
+To achieve this the following points need to be taken into account:
+\begin{itemize}
+    \item Use request/update scheme
+    \item Use combination of primitive channels
+    \item Use overall determinisitc MoC (for example dataflow)
+    \item Rely on own 2-phase synchronization scheme for interprocess communication
+\end{itemize}
+
+\subsection{Interface and Channel Design}
+Motivation for interface and channel design:
+\begin{itemize}
+    \item Reduce modelling effort
+    \item Avoid code duplications
+    \item Increase opportunities for reuse
+    \item Ease design refinement
+    \item Enable channel substitution
+    \item Increase simulation performance
+\end{itemize}
+
+Four golden rules:
+\begin{itemize}
+    \item Minimize number of distinct interfaces
+    \item Layer specialized interfaces
+    \item Share common code via inheritance
+    \item Build special interfaces via multiple inheritance
+\end{itemize}
+
+\section{Channel Design}
+\subsection{Primitive channels}
+\begin{itemize}
+    \item Derived from class \lstinline{sc_prim_channel}
+    \item Two phase synchronization via request/update schemed
+    \item Must not contain processes, modules, etc.
+\end{itemize}
+
+Examples: Hardware signal (similar to VHDL), FIFO channel, mutex.
+
+Details: values get assigned in the current delta cycle, but only propagated in the next delta cycle.
+
+\subsection{Hierarchical channels}
+\begin{itemize}
+    \item Derived from class \lstinline{sc_channel}
+    \item May contain processes, modules and other channels
+    \item Two phase synchronization must be implemented by yourself
+\end{itemize}
+
+Map abstract communication to actual implementation for:
+\begin{itemize}
+    \item More structural accuracy
+    \item More timing accuracy
+    \item More functional accuracy
+    \item More data organization accuracy
+    \item More communication protocol accuracy
+\end{itemize}
+
+Example: Replace \lstinline{sc_fifo} with \lstinline{hw_fifo}.
+
+\subsection{Adapters and Converters}
+\textbf{Adapters} allow interfaces to be connected with ports.
+
+\textbf{Converters} allow ports to be connected with other ports.
+
+\subsubsection{Optional Steps in Communication Refinement}
+Two ways:
+\begin{itemize}
+    \item Wrap channel and its adapters into one (hierarchical) channel.
+    \item Merge adapters into their modules
+\end{itemize}
