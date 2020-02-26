@@ -1,0 +1,36 @@
+digraph g {
+    node [
+        shape=box
+    ]
+
+    stdChannels [
+        label = "Standard Channels for Various\nModels of Computation"
+    ]
+
+    methodologyChannels [
+        label = "Methodlogy-Specific Channels"
+    ]
+
+    primChannels [
+        label = "Primitive Channels"
+    ]
+
+    coreLang [
+        label = "SystemC Core Language"
+    ]
+
+    dataTypes [
+        label = "Data-Types"
+    ]
+
+    cpp [
+        label = "ISO C++ Language Standard"
+    ]
+
+    stdChannels->primChannels
+    methodologyChannels->primChannels
+    primChannels->coreLang
+    primChannels->dataTypes
+    coreLang -> cpp
+    dataTypes -> cpp 
+}

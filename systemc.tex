@@ -1,0 +1,211 @@
+\chapter{SystemC Language Elements}
+\section{What is System C}
+\begin{itemize}
+    \item Modeling
+        \begin{itemize}
+            \item Concurrency
+            \item Communication
+            \item Reactivity
+            \item Notion of Time
+        \end{itemize}
+    \item Simulation (Event-based simulation kernel)
+    \item A C++ class library (like STL)
+\end{itemize}
+
+\section{Language Architecture}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{arch.pdf}
+\end{figure}
+
+\section{Design Flow}
+\begin{enumerate}
+    \item Compilation
+    \item Linking
+    \item Execution
+    \item Elaboration: SystemC Kernel connects and initializes design portions
+    \item Simulation: SystenC Kernel works on event queue until there are no new events (or the kernel is stopped)
+\end{enumerate}
+
+\section{Hardware Data Types}
+Sorted from fastest to slowest:
+\begin{enumerate}
+    \item C++ built in data types: \lstinline{int, unsigned, long, char, float, double}
+    \item 1 to 64 bit integrals: \lstinline{sc_int<>, sc_uint<>}
+    \item 2-valued boolean logic: \lstinline{sc_bv<>}
+    \item 4-values logic: \lstinline{sc_logic<>, sc_lv<>}
+    \item unlimited size numbers: \lstinline{sc_bigint<>, sc_biguint<>}
+    \item fixed precision: \lstinline{sc_fixed<>, sc_ufixed<>}
+\end{enumerate}
+
+\subsection{Native data types}
+Fastest for simulation bugt inefficient in HW.
+
+\subsection{1 to 64 bit integrals}
+Paramatereisable width/precision, built on top of C++ integral types.
+Native operators are overloaded.
+
+\subsection{Arbitrary Precision Data Types}
+Are used when 64 bits are not enough, e.g. in intermediate values.
+Native operators are overloaded.
+
+Beware of precision loss (because poor API design):
+\begin{lstlisting}
+    sc_uint<40> a,b;
+    sc_biguint<80> w1 = a*b; // Calculation done with 64 bits
+
+    // Better
+    sc_biguint<80> w2 = a;
+    w2 *= b;
+\end{lstlisting}
+
+\subsection{Bits and Bitvector}
+Can have unlimited width. Only binary-logical operators are defined,
+additionally \lstinline{length()}, \lstinline{print()}, \lstinline{lrotate()}, \lstinline{rrotate()}, \lstinline{reverse()}, \lstinline{operator[](int)} (\lstinline{[0]} is LSB) and \lstinline{operator()(int h, int l)} are defined.
+
+\subsection{Logic Scalars and Logic Vectors}
+Datatypes: \lstinline{sc_logic} and \lstinline{sc_lv}.
+
+Four valued logic:
+\begin{itemize}
+    \item \lstinline{0}: low voltage
+    \item \lstinline{1}: high voltage
+    \item \lstinline{X}: undefined
+    \item \lstinline{Z}: high impedance
+\end{itemize}
+With the and operation defined as:
+\begin{table}[H]
+    \centering
+    \begin{tabular}{c|cccc}
+        \toprule
+        \& & 0 & 1 & X & Z \\
+        \midrule
+        0 & 0 & 0 & 0 & 0 \\
+        1 & 0 & 1 & X & X \\
+        X & 0 & X & X & X \\
+        Z & 0 & X & X & X \\
+        \bottomrule 
+    \end{tabular}
+\end{table}
+
+Is used in busses with multiple drivers and/or multiple readers. 
+
+The final, actual, value of the signal is then represented by the \lstinline{sc_signal_resolved} and \lstinline{sc_signal_rv} data type.
+
+\subsection{Fixed-Point Data Types}
+Floating-point not HW friendly. Fixed point logic solves the problem:
+\begin{lstlisting}
+    sc_fixed<WL, IWL, QM, OM, NB>
+\end{lstlisting}
+(or \lstinline{sc_ufixed<...>}) with:
+\begin{enumerate}
+    \item \lstinline{WL}: Word length (i.e. total length in bits)
+    \item \lstinline{IWL}: Integer word length (i.e. position of "." relative to MSB
+    \item \lstinline{QM}: Quantization mode
+    \item \lstinline{OM}: Overflow mode (saturation or wrap-around
+    \item \lstinline{NB}: Number of bit for overflow
+\end{enumerate}
+
+Faster but limited to 53 bits: \lstinline{sc_fixed_fast<>} and \lstinline{sc_ufixed_fast}.
+
+\section{Modules and Hierarchy}
+\subsection{Modules}
+Modules are containers for structure.
+
+They contain:
+\begin{itemize}
+    \item Ports
+    \item Processes
+    \item Internal Data
+    \item Sensitivity List
+    \item Other modules (hierarchy)
+\end{itemize}
+
+\subsection{Communication}
+Communication is a triplet:
+\begin{itemize}
+    \item \textbf{Ports}: are doors into/out of a channel via a particular interface
+    \item \textbf{Channels}: Implement a particular communication mechanism (e.g. FIFOs, stackes,...) 
+    \item \textbf{Interfaces}: Show a modules communication methods (via abstract C++ class)
+\end{itemize}
+
+\subsection{Channels}
+\subsubsection{Primitive channels}
+Primitive channels are channels provided by System C, they have built in synchronization and are ready to use.
+
+Examples:
+\begin{itemize}
+    \item \lstinline{sc_fifo<>}
+    \item \lstinline{sc_mutex<>}
+    \item \lstinline{sc_signal<>}
+\end{itemize}
+
+\subsubsection{Hierarchical channels}
+Used to implement own channels for complexe communication or communication refinement.
+Requires custom synchronization schemes.
+
+\subsection{Concurrency via Processes}
+A process is a basic unit of functionality, it runs concurrently to other processes.
+
+A process is part of a module and needs to be registered with the simulation kernel.
+
+There are two kinds of processes:
+\begin{itemize}
+    \item \lstinline{SC_METHOD}
+    \item \lstinline{SC_THREAD}
+\end{itemize}
+
+\subsection{Events}
+Events are the mechanism for reactivity, they control how processes are triggered and resumed.
+
+Example: a signal has an event associated with each value change.
+
+An event is notified by the owner:
+\begin{itemize}
+    \item Immediately: \lstinline{event.notify();}
+    \item After a delta delay: \lstinline{event.notify(SC_ZERO_TIME);}
+    \item After a certain time: \lstinline{event.notify(100, SC_NS);}
+\end{itemize}
+
+\section{Model of Time}
+Time is represented by a integer (default: 64 bits, unsigned) value inside the simulation kernel.
+
+Time units:
+\begin{itemize}
+    \item \lstinline{SC_FS}
+    \item \lstinline{SC_PS}
+    \item \lstinline{SC_NS}
+    \item \lstinline{SC_US}
+    \item \lstinline{SC_MS}
+    \item \lstinline{SC_SEC}
+\end{itemize}
+
+\subsection{Clock module}
+\begin{lstlisting}
+    lstinline{sc_clock clk("clk", 20, 0.5, 2, true);}
+\end{lstlisting}
+
+Arguments:
+\begin{itemize}
+    \item Name
+    \item Period
+    \item Duty-Cycle
+    \item Phase Shift (as Time)
+    \item First edge (\lstinline{true} is rising)
+\end{itemize}
+
+\subsection{Configuring Time}
+\begin{lstlisting}
+    sc_set_time_resolution(10, SC_PS);
+\end{lstlisting}
+
+Time is then rounded according to the resolution so
+\lstinline{sc_time t(3.1415, SC_NS)} is equivalent to
+\lstinline{sc_time t(3140, SC_PS)}.
+
+\section{Concept of Time for different Models}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=.7\textwidth]{models.pdf}
+\end{figure}
+
