@@ -108,8 +108,7 @@ Floating-point not HW friendly. Fixed point logic solves the problem:
 
 Faster but limited to 53 bits: \lstinline{sc_fixed_fast<>} and \lstinline{sc_ufixed_fast}.
 
-\section{Modules and Hierarchy}
-\subsection{Modules}
+\section{Modules}
 Modules are containers for structure.
 
 They contain:
@@ -121,15 +120,58 @@ They contain:
     \item Other modules (hierarchy)
 \end{itemize}
 
-\subsection{Communication}
-Communication is a triplet:
+\subsection{Syntax}
+SystemC-Macro-Style:
+\begin{lstlisting}
+    SC_MODULE(Name) {
+        ...
+        SC_CTOR(Name) {
+
+        }
+    }
+\end{lstlisting}
+
+C++-Style:
+\begin{lstlisting}
+    class Name : public sc_module {
+        SC_HAS_PROCESS(Name);   // Required
+        Name(sc_module_name name, ...) : sc_module(name) {
+            // CTor
+        }
+    }
+\end{lstlisting}
+
+The constructor can initialize ports: \lstinline{in1.initialize(0x17);}
+
+\section{Communication}
+Communication is a triplet.
+\subsection{Ports}
+Ports are the explicit (compare global variables) external interfaces of a module. They are members of the module class and are used to pass data to and from the module.
+
+All ports have a datatype, and a direction:
 \begin{itemize}
-    \item \textbf{Ports}: are doors into/out of a channel via a particular interface
-    \item \textbf{Channels}: Implement a particular communication mechanism (e.g. FIFOs, stackes,...) 
-    \item \textbf{Interfaces}: Show a modules communication methods (via abstract C++ class)
+    \item \lstinline{sc_in<T>}
+    \item \lstinline{sc_out<T>}
+    \item \lstinline{sc_inout<T>}
 \end{itemize}
 
+\subsection{Interfaces}
+Interfaces define a set of operations and data access. 
+For example \lstinline{read()} and \lstinline{write()}.
+
+Ports are bound to interfaces:
+\begin{lstlisting}
+    template <class T>
+    class sc_in : public sc_port<sc_signal_in_if<T>, 1> {...
+\end{lstlisting}
+
 \subsection{Channels}
+\begin{itemize}
+    \item Channels (fully) implement one or more interfaces. 
+        This makes it easy to replace them.
+    \item Channels make concurrency work.
+\end{itemize} 
+
 \subsubsection{Primitive channels}
 Primitive channels are channels provided by System C, they have built in synchronization and are ready to use.
 
@@ -140,22 +182,59 @@ Examples:
     \item \lstinline{sc_signal<>}
 \end{itemize}
 
+Primitive channels are synchronized using the request-update-scheme (two phase synchronization):
+\begin{lstlisting}
+    class sc_prim_channel : ... {
+        protected:
+            void request_update(); // put into event queue
+            virtual void update(); // called in 2nd phase
+    }
+\end{lstlisting}
+
 \subsubsection{Hierarchical channels}
 Used to implement own channels for complexe communication or communication refinement.
 Requires custom synchronization schemes.
 
-\subsection{Concurrency via Processes}
+Hierarchical channels may have embedded:
+\begin{itemize}
+    \item Processes
+    \item Instances of modules
+    \item Channels
+\end{itemize}
+
+\section{Concurrency via Processes}
 A process is a basic unit of functionality, it runs concurrently to other processes.
 
 A process is part of a module and needs to be registered with the simulation kernel.
 
-There are two kinds of processes:
+All processes follow the evaluate-update semantics of SystemC
+\begin{enumerate}
+    \item Invoke all processes, where events got notified
+    \item Update channels with new values
+\end{enumerate}
+
+\subsection{Method Processes}
+Entire body of member function is executed when an event is notigied
+which the method is sensitive to. Execution is un-interrupted, in order and infinitely fast. Thus a method process has no implicit execution state.
+
+Methods are good for combinatorial HW circuits, but the sensitivity is fixed at compile time.
+
+\subsection{Thread Processes}
+Threads have implicit state information. 
+They suspend there execution using \lstinline{wait()}.
+
+Threads have greater expressiveness which results in a greater cost in simulation performance. Threads are good for multi-cycle behaviour which require dynamic sensitivity.
+
+\subsection{Possible Pitfalls}
 \begin{itemize}
-    \item \lstinline{SC_METHOD}
-    \item \lstinline{SC_THREAD}
+    \item Order of execution of the processes is determinisitic but unspecified
+    \item Do not use shared resources between processes
+    \item Do not call process directly, this will crash the simulation kernel
+    \item No process should call another process directly
+    \item Threads need to run into a \lstinline{wait()} at some point, beware of infinite loops.
 \end{itemize}
 
-\subsection{Events}
+\section{Events}
 Events are the mechanism for reactivity, they control how processes are triggered and resumed.
 
 Example: a signal has an event associated with each value change.
@@ -166,6 +245,23 @@ An event is notified by the owner:
     \item After a delta delay: \lstinline{event.notify(SC_ZERO_TIME);}
     \item After a certain time: \lstinline{event.notify(100, SC_NS);}
 \end{itemize}
+
+Processes can be made sensitive to events.
+
+\subsection{Static sensitivity}
+Special variable \lstinline{sensitive} of class \lstinline{sc_module} (either \lstinline{operator()(sc_event)} or \lstinline{operator<<(sc_event)}).
+
+\subsection{Dynamic Sensitivity}
+Using the \lstinline{wait()} statement for threads:
+\begin{itemize}
+    \item wait for an event: \lstinline{wait(e1);}
+    \item all must be notified: \lstinline{wait(e1 & e2 & e3);}
+    \item at least one must be notified: \lstinline{wait(e1 | e2 | e3);}
+    \item wait for time: \lstinline{wait(214, SC_US);}
+    \item wait for time of an event: \lstinline{wait(100, SC_NS, e1);}
+\end{itemize}
+
+Use \lstinline{next_trigger(time, time_unit, event)} for methods, this does not suspend the method.
 
 \section{Model of Time}
 Time is represented by a integer (default: 64 bits, unsigned) value inside the simulation kernel.
@@ -182,7 +278,7 @@ Time units:
 
 \subsection{Clock module}
 \begin{lstlisting}
-    lstinline{sc_clock clk("clk", 20, 0.5, 2, true);}
+    sc_clock clk("clk", 20, 0.5, 2, true);
 \end{lstlisting}
 
 Arguments:
@@ -203,7 +299,7 @@ Time is then rounded according to the resolution so
 \lstinline{sc_time t(3.1415, SC_NS)} is equivalent to
 \lstinline{sc_time t(3140, SC_PS)}.
 
-\section{Concept of Time for different Models}
+\section{Concept of Time for Different Models}
 \begin{figure}[H]
     \centering
     \includegraphics[width=.7\textwidth]{models.pdf}
